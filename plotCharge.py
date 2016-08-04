@@ -7,26 +7,30 @@ import vtk
 hf = h5py.File('/afs/desy.de/group/fla/plasma/data002/OSIRIS-runs/3D-runs/RAKE/rake-v10kA.G.SR2.RI.3D/MS/DENSITY/beam-driver/charge/charge-beam-driver-000026.h5','r')
 
 data = hf.get('charge')
-
 print('Shape of the array charge: ', data.shape,'\nType: ',data.dtype,'\n')
 
 # Changing to positive integer types (particle density)
 # it is required by vtkVolumeRayCastMapper
 npdata = np.array(data)
-npdata = -10 * npdata
-npdataint = np.rint(npdata)
-npdataint.astype(np.uint8)
+npdata = -100 * npdata
+npdataint = np.array(npdata, dtype=np.uint8)
+#npdataint = np.zeros(npdata.shape, dtype=np.uint8)
+#npdataint = np.rint(npdata)
+#npdataint.astype(np.uint8)
 
 print('Shape of the array charge: ', npdataint.shape,'\nType: ',npdataint.dtype,'\n')
 
+#print('Converting data...')
 # This is very slow
 #for i in range(0, data.shape[0]):
 #    for j in range(0, data.shape[1]):
 #        for k in range(0, data.shape[2]):
-#            npdata[i,j,k] = -10 * npdata[i,j,k]
+#            npdataint[i,j,k] = -10 * npdata[i,j,k]
 
-minvalue = np.amin(npdata)
-maxvalue = np.amax(npdata)
+print('Rendering...')
+            
+minvalue = np.amin(npdataint)
+maxvalue = np.amax(npdataint)
 
 print('Min value = ',minvalue)
 print('Max value = ',maxvalue)
@@ -47,8 +51,8 @@ dataImporter.SetDataScalarTypeToUnsignedChar()
 dataImporter.SetNumberOfScalarComponents(1)
 # The following two functions describe how the data is stored
 # and the dimensions of the array it is stored in.
-dataImporter.SetDataExtent(0, npdata.shape[0], 0, npdata.shape[1], 0, npdata.shape[2])
-dataImporter.SetWholeExtent(0, npdata.shape[0], 0, npdata.shape[1], 0, npdata.shape[2])
+dataImporter.SetDataExtent(0, npdataint.shape[0]-1, 0, npdataint.shape[1]-1, 0, npdataint.shape[2]-1)
+dataImporter.SetWholeExtent(0, npdataint.shape[0]-1, 0, npdataint.shape[1]-1, 0, npdataint.shape[2]-1)
 
 alphaChannelFunc = vtk.vtkPiecewiseFunction()
 alphaChannelFunc.AddPoint(0, 0.0)
@@ -93,7 +97,7 @@ renderInteractor.SetRenderWindow(renderWin)
 renderer.AddVolume(volume)
 
 # ... set background color to white ...
-renderer.SetBackground(1,1,1)
+renderer.SetBackground(0,0,0)
 # Other colors 
 # nc = vtk.vtkNamedColors()
 # renderer.SetBackground(nc.GetColor3d('MidnightBlue'))
