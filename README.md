@@ -8,5 +8,6 @@ pyVTK will be a software package written in Python that allows for 3D visualizat
 
 Just fork the repository by doing:
 ```
-
+git clone ssh://git@stash.desy.de:7999/~delaossa/pyvtk.git
 ```
+
