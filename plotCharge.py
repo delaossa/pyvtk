@@ -7,18 +7,23 @@ import vtk
 hf = h5py.File('/afs/desy.de/group/fla/plasma/data002/OSIRIS-runs/3D-runs/RAKE/rake-v10kA.G.SR2.RI.3D/MS/DENSITY/beam-driver/charge/charge-beam-driver-000026.h5','r')
 
 data = hf.get('charge')
+
 print('Shape of the array charge: ', data.shape,'\nType: ',data.dtype,'\n')
 
+# Changing to positive integer types (particle density)
+# it is required by vtkVolumeRayCastMapper
 npdata = np.array(data)
+npdata = -10 * npdata
+npdataint = np.rint(npdata)
+npdataint.astype(np.uint8)
 
-# Changing to positive numbers (particle density)
-npdata = -1 * npdata
+print('Shape of the array charge: ', npdataint.shape,'\nType: ',npdataint.dtype,'\n')
 
 # This is very slow
 #for i in range(0, data.shape[0]):
 #    for j in range(0, data.shape[1]):
 #        for k in range(0, data.shape[2]):
-#            npdata[i,j,k] = -npdata[i,j,k]
+#            npdata[i,j,k] = -10 * npdata[i,j,k]
 
 minvalue = np.amin(npdata)
 maxvalue = np.amax(npdata)
@@ -32,11 +37,11 @@ print('Max value = ',maxvalue)
 dataImporter = vtk.vtkImageImport()
 
 # The array is converted to a string of chars and imported.
-data_string = npdata.tostring()
+data_string = npdataint.tostring()
 dataImporter.CopyImportVoidPointer(data_string, len(data_string))
 
 # The type of the newly imported data is set to float.
-dataImporter.SetDataScalarTypeToFloat()
+dataImporter.SetDataScalarTypeToUnsignedChar()
 # Because the data that is imported only contains an intensity value,
 # the importer must be told this is the case.
 dataImporter.SetNumberOfScalarComponents(1)
@@ -46,11 +51,11 @@ dataImporter.SetDataExtent(0, npdata.shape[0], 0, npdata.shape[1], 0, npdata.sha
 dataImporter.SetWholeExtent(0, npdata.shape[0], 0, npdata.shape[1], 0, npdata.shape[2])
 
 alphaChannelFunc = vtk.vtkPiecewiseFunction()
-alphaChannelFunc.AddPoint(0.0, 0.0)
+alphaChannelFunc.AddPoint(0, 0.0)
+alphaChannelFunc.AddPoint(11, 0.0)
 alphaChannelFunc.AddPoint(maxvalue, 0.8)
 
 # This class stores color data and can create color tables from a few color points.
-# to be of the colors red green and blue.
 colorFunc = vtk.vtkColorTransferFunction()
 colorFunc.AddRGBPoint(0.0, 0.865, 0.865, 0.865)
 colorFunc.AddRGBPoint(maxvalue, 0.2313, 0.298, 0.753)
@@ -61,8 +66,9 @@ colorFunc.AddRGBPoint(maxvalue, 0.2313, 0.298, 0.753)
 volumeProperty = vtk.vtkVolumeProperty()
 volumeProperty.SetColor(colorFunc)
 volumeProperty.SetScalarOpacity(alphaChannelFunc)
+volumeProperty.ShadeOff()
 #volumeProperty.ShadeOn()
-#volumeProperty.SetInterpolationTypeToLinear()
+volumeProperty.SetInterpolationTypeToLinear()
 
 # This class describes how the volume is rendered (through ray tracing).
 compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
@@ -70,12 +76,6 @@ compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
 volumeMapper = vtk.vtkVolumeRayCastMapper()
 volumeMapper.SetVolumeRayCastFunction(compositeFunction)
 volumeMapper.SetInputConnection(dataImporter.GetOutputPort())
-
-# We can finally create our volume.
-# We also have to specify the data for it, as well as how the data will be rendered.
-#volumeMapper = vtk.vtkFixedPointVolumeRayCastMapper()
-#volumeMapper.SetNumberOfThreads(1)
-#volumeMapper.SetInputConnection(dataImporter.GetOutputPort())
 
 # The class vtkVolume is used to pair the previously declared volume as well as the properties to be used when rendering that volume.
 volume = vtk.vtkVolume()
@@ -93,7 +93,7 @@ renderInteractor.SetRenderWindow(renderWin)
 renderer.AddVolume(volume)
 
 # ... set background color to white ...
-renderer.SetBackground(0,0,0)
+renderer.SetBackground(1,1,1)
 # Other colors 
 # nc = vtk.vtkNamedColors()
 # renderer.SetBackground(nc.GetColor3d('MidnightBlue'))
