@@ -3,7 +3,8 @@ import h5py
 import numpy as np
 import vtk
 
-hf = h5py.File('data/charge-beam-driver-000026.h5','r')
+#hf = h5py.File('data/charge-beam-driver-000026.h5','r')
+hf = h5py.File('/afs/desy.de/group/fla/plasma/data002/OSIRIS-runs/3D-runs/RAKE/rake-v10kA.G.SR2.RI.3D/MS/DENSITY/beam-driver/charge/charge-beam-driver-000026.h5','r')
 
 data = hf.get('charge')
 print('Shape of the array charge: ', data.shape,'\nType: ',data.dtype,'\n')
@@ -63,10 +64,18 @@ volumeProperty.SetScalarOpacity(alphaChannelFunc)
 #volumeProperty.ShadeOn()
 #volumeProperty.SetInterpolationTypeToLinear()
 
+# This class describes how the volume is rendered (through ray tracing).
+compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
+# We can finally create our volume. We also have to specify the data for it, as well as how the data will be rendered.
+volumeMapper = vtk.vtkVolumeRayCastMapper()
+volumeMapper.SetVolumeRayCastFunction(compositeFunction)
+volumeMapper.SetInputConnection(dataImporter.GetOutputPort())
+
 # We can finally create our volume.
 # We also have to specify the data for it, as well as how the data will be rendered.
-volumeMapper = vtk.vtkFixedPointVolumeRayCastMapper()
-volumeMapper.SetInputConnection(dataImporter.GetOutputPort())
+#volumeMapper = vtk.vtkFixedPointVolumeRayCastMapper()
+#volumeMapper.SetNumberOfThreads(1)
+#volumeMapper.SetInputConnection(dataImporter.GetOutputPort())
 
 # The class vtkVolume is used to pair the previously declared volume as well as the properties to be used when rendering that volume.
 volume = vtk.vtkVolume()
