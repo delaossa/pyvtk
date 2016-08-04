@@ -3,8 +3,8 @@ import h5py
 import numpy as np
 from vtk import *
 
-#hf = h5py.File('data/charge-beam-driver-000026.h5','r')
-hf = h5py.File('/home/delaossa/data/charge-beam-driver-000026.h5','r')
+#hf = h5py.File('data/charge-plasma-000026.h5','r')
+hf = h5py.File('data/charge-beam-driver-000026.h5','r')
 
 data = hf.get('charge')
 axisz = hf.get('AXIS/AXIS1')
@@ -16,7 +16,7 @@ dy = (axisy[1]-axisy[0])/data.shape[1]
 dx = (axisx[1]-axisx[0])/data.shape[0]
 
 # This is for the spacing
-skn = 10.0
+skn = 1.0
 
 print('Axis z range: [%.2f,%.2f]  Nbins = %i  dz = %.4f' % (axisz[0],axisz[1],data.shape[2],dz) )
 print('Axis x range: [%.2f,%.2f]  Nbins = %i  dx = %.4f' % (axisx[0],axisx[1],data.shape[0],dx) )
@@ -46,8 +46,9 @@ print('Max value = ',maxvalue)
 dataImporter = vtk.vtkImageImport()
 
 # The array is converted to a string of chars and imported.
-data_string = npdataint.tostring()
-dataImporter.CopyImportVoidPointer(data_string, len(data_string))
+#data_string = npdataint.tostring()
+#dataImporter.CopyImportVoidPointer(data_string, len(data_string))
+dataImporter.SetImportVoidPointer(npdataint)
 
 # The type of the newly imported data is set to float.
 dataImporter.SetDataScalarTypeToUnsignedChar()
@@ -56,10 +57,10 @@ dataImporter.SetDataScalarTypeToUnsignedChar()
 dataImporter.SetNumberOfScalarComponents(1)
 # The following two functions describe how the data is stored
 # and the dimensions of the array it is stored in.
-dataImporter.SetDataExtent(0, npdataint.shape[0]-1, 0, npdataint.shape[1]-1, 0, npdataint.shape[2]-1)
-dataImporter.SetWholeExtent(0, npdataint.shape[0]-1, 0, npdataint.shape[1]-1, 0, npdataint.shape[2]-1)
-dataImporter.SetDataSpacing(skn*dx,skn*dy,skn*dz)
-dataImporter.SetDataOrigin(skn*axisx[0],skn*axisy[0],0.0)
+dataImporter.SetDataExtent(0, npdataint.shape[2]-1, 0, npdataint.shape[1]-1, 0, npdataint.shape[0]-1)
+dataImporter.SetWholeExtent(0, npdataint.shape[2]-1, 0, npdataint.shape[1]-1, 0, npdataint.shape[0]-1)
+dataImporter.SetDataSpacing(skn*dz,skn*dy,skn*dx)
+dataImporter.SetDataOrigin(skn*0.0,skn*axisy[0],skn*axisx[0])
 
 # Operations on the data
 imageInt = vtk.vtkImageCast()
@@ -84,7 +85,7 @@ imageAppend.SetAppendAxis(0)
 
 alphaChannelFunc = vtk.vtkPiecewiseFunction()
 alphaChannelFunc.AddPoint(0, 0.0)
-alphaChannelFunc.AddPoint(0.02*maxvalue, 0.0)
+alphaChannelFunc.AddPoint(0.1*maxvalue, 0.0)
 alphaChannelFunc.AddPoint(maxvalue, 0.8)
 
 # This class stores color data and can create color tables from a few color points.
@@ -144,23 +145,28 @@ scalarBar.SetLabelFormat("%5.2f")
 
 renderer.AddActor(scalarBar)
 
- 
 axes = vtk.vtkAxesActor()
 axes.SetShaftTypeToLine()
-axes.SetTotalLength(skn*(axisx[1]-axisx[0])/2.0,skn*(axisy[1]-axisy[0])/2.0,skn*(axisz[1]-axisz[0])/2.0)
-#axes.SetNormalizedShaftLength(1.0, 1.0, 1.0)
-#axes.SetNormalizedTipLength(0.05, 0.05, 0.05)
+axes.SetTotalLength(skn*0.2*(axisx[1]-axisx[0]),skn*0.2*(axisy[1]-axisy[0]),skn*0.2*(axisz[1]-axisz[0]))
+axes.SetNormalizedShaftLength(1, 1, 1)
+axes.SetNormalizedTipLength(0.1, 0.1, 0.1)
+propA = vtkTextProperty()
+propA.SetFontFamilyToArial()
+propA.ItalicOff()
+propA.BoldOff()
+propA.SetFontSize(1)
+axisxact = axes.GetXAxisCaptionActor2D()
+axisxact.SetCaptionTextProperty(propA)
+
 # The axes are positioned with a user transform
-transform = vtk.vtkTransform()
-transform.Translate(0.0, 0.0, 0.0)
-axes.SetUserTransform(transform)
- 
-# properties of the axes labels can be set as follows
-# this sets the x axis label to red
-#axes.GetXAxisCaptionActor2D().GetCaptionTextProperty().SetColor(1,0,0);
+#transform = vtk.vtkTransform()
+#transform.Translate(0.0, 0.0, 0.0)
+#axes.SetUserTransform(transform)
  
 # the actual text of the axis label can be changed:
-# axes.SetXAxisLabelText("x");
+axes.SetXAxisLabelText("");
+axes.SetZAxisLabelText("");
+axes.SetYAxisLabelText("");
  
 renderer.AddActor(axes)
 

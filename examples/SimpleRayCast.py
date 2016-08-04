@@ -16,7 +16,7 @@ iren.SetRenderWindow(renWin)
 
 # Create the reader for the data
 reader = vtk.vtkStructuredPointsReader()
-reader.SetFileName(VTK_DATA_ROOT + "/Data/ironProt.vtk")
+reader.SetFileName("data/ironProt.vtk")
 
 # Create transfer mapping scalar value to opacity
 opacityTransferFunction = vtk.vtkPiecewiseFunction()
