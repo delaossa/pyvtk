@@ -3,7 +3,7 @@ import h5py
 import numpy as np
 import vtk
 
-hf = h5py.File('charge-beam-driver-000026.h5','r')
+hf = h5py.File('data/charge-beam-driver-000026.h5','r')
 
 data = hf.get('charge')
 print('Shape of the array charge: ', data.shape,'\nType: ',data.dtype,'\n')
@@ -46,15 +46,12 @@ dataImporter.SetWholeExtent(0, npdata.shape[0], 0, npdata.shape[1], 0, npdata.sh
 
 alphaChannelFunc = vtk.vtkPiecewiseFunction()
 alphaChannelFunc.AddPoint(0.0, 0.0)
-alphaChannelFunc.AddPoint(1.1, 0.075)
-alphaChannelFunc.AddPoint(1.6, 0.8375)
-alphaChannelFunc.AddPoint(maxvalue, 1.0)
+alphaChannelFunc.AddPoint(maxvalue, 0.8)
 
 # This class stores color data and can create color tables from a few color points.
 # to be of the colors red green and blue.
 colorFunc = vtk.vtkColorTransferFunction()
-colorFunc.AddRGBPoint(0.0, 0.705, 0.0156, 0.149)
-colorFunc.AddRGBPoint(1.0, 0.865, 0.865, 0.865)
+colorFunc.AddRGBPoint(0.0, 0.865, 0.865, 0.865)
 colorFunc.AddRGBPoint(maxvalue, 0.2313, 0.298, 0.753)
 
 # The previous two classes stored properties.
@@ -68,10 +65,7 @@ volumeProperty.SetScalarOpacity(alphaChannelFunc)
 
 # We can finally create our volume.
 # We also have to specify the data for it, as well as how the data will be rendered.
-volumeMapper = vtk.vtkGPUVolumeRayCastMapper()
-#volumeMapper.SetBlendModeToMaximumIntensity();
-#volumeMapper.SetSampleDistance(0.1)
-#volumeMapper.SetAutoAdjustSampleDistances(0)
+volumeMapper = vtk.vtkFixedPointVolumeRayCastMapper()
 volumeMapper.SetInputConnection(dataImporter.GetOutputPort())
 
 # The class vtkVolume is used to pair the previously declared volume as well as the properties to be used when rendering that volume.
@@ -89,9 +83,12 @@ renderInteractor.SetRenderWindow(renderWin)
 # We add the volume to the renderer ...
 renderer.AddVolume(volume)
 
-# ... set background color 
-nc = vtk.vtkNamedColors()
-renderer.SetBackground(nc.GetColor3d('MidnightBlue'))
+# ... set background color to white ...
+renderer.SetBackground(0,0,0)
+# Other colors 
+# nc = vtk.vtkNamedColors()
+# renderer.SetBackground(nc.GetColor3d('MidnightBlue'))
+
 # ... and set window size.
 renderWin.SetSize(800, 600)
 
