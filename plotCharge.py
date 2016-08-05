@@ -105,11 +105,11 @@ volumeProperty.ShadeOff()
 volumeProperty.SetInterpolationTypeToLinear()
 
 # This class describes how the volume is rendered (through ray tracing).
-#compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
+compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
 # We can finally create our volume. We also have to specify the data for it, as well as how the data will be rendered.
-#mapper = vtk.vtkVolumeRayCastMapper()
-#mapper.SetVolumeRayCastFunction(compositeFunction)
-mapper = vtk.vtkGPUVolumeRayCastMapper()
+mapper = vtk.vtkVolumeRayCastMapper()
+mapper.SetVolumeRayCastFunction(compositeFunction)
+#mapper = vtk.vtkGPUVolumeRayCastMapper()
 #mapper.SetBlendModeToMinimumIntensity();
 #mapper.SetSampleDistance(0.1)
 mapper.SetAutoAdjustSampleDistances(0)
