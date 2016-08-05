@@ -68,92 +68,38 @@ imageInt = vtk.vtkImageCast()
 imageInt.SetInputConnection(dataImporter.GetOutputPort())
 imageInt.SetOutputScalarTypeToUnsignedChar()
 
-flipX = vtk.vtkImageFlip()
-flipX.SetInputConnection(imageInt.GetOutputPort())
-flipX.SetFilteredAxis(0)
+threshold = vtk.vtkImageThreshold()
+threshold.SetInputConnection(imageInt.GetOutputPort())
+threshold.ThresholdBetween(110,200)
+threshold.ReplaceInOn()
+threshold.SetInValue(1)  # set all values in range to 1
+threshold.ReplaceOutOn()
+threshold.SetOutValue(0)  # set all values out range to 0
+threshold.Update()
 
-flipY = vtk.vtkImageFlip()
-flipY.SetInputConnection(imageInt.GetOutputPort())
-flipY.SetFilteredAxis(1)
-flipY.FlipAboutOriginOn()
+dmc = vtk.vtkDiscreteMarchingCubes()
+dmc.SetInputConnection(threshold.GetOutputPort())
+dmc.GenerateValues(1, 1, 1)
+dmc.Update()
 
-imageAppend = vtk.vtkImageAppend()
-imageAppend.AddInputConnection(imageInt.GetOutputPort())
-#imageAppend.AddInputConnection(flipX.GetOutputPort())
-#imageAppend.AddInputConnection(flipY.GetOutputPort())
-imageAppend.SetAppendAxis(0)
+mapper = vtk.vtkPolyDataMapper()
+mapper.SetInputConnection(dmc.GetOutputPort())
 
-
-alphaChannelFunc = vtk.vtkPiecewiseFunction()
-alphaChannelFunc.AddPoint(0, 0.0)
-alphaChannelFunc.AddPoint(100, 0.01)
-alphaChannelFunc.AddPoint(maxvalue, 0.8)
-
-# This class stores color data and can create color tables from a few color points.
-colorFunc = vtk.vtkColorTransferFunction()
-colorFunc.AddRGBPoint(0.0, 0.865, 0.865, 0.865)
-colorFunc.AddRGBPoint(maxvalue, 0.2313, 0.298, 0.753)
-
-# The previous two classes stored properties.
-# Because we want to apply these properties to the volume we want to render,
-# we have to store them in a class that stores volume prpoperties.
-volumeProperty = vtk.vtkVolumeProperty()
-volumeProperty.SetColor(colorFunc)
-volumeProperty.SetScalarOpacity(alphaChannelFunc)
-volumeProperty.ShadeOff()
-#volumeProperty.ShadeOn()
-volumeProperty.SetInterpolationTypeToLinear()
-
-# This class describes how the volume is rendered (through ray tracing).
-compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
-mapper = vtk.vtkVolumeRayCastMapper()
-mapper.SetVolumeRayCastFunction(compositeFunction)
-#mapper = vtkFixedPointVolumeRayCastMapper()
-#mapper = vtk.vtkVolumeTextureMapper2D()
-mapper = vtk.vtkGPUVolumeRayCastMapper()
-#mapper.SetBlendModeToMaximumIntensity();
-#mapper.SetSampleDistance(0.1)
-#mapper.SetAutoAdjustSampleDistances(0)
-
-# Add data to the mapper
-mapper.SetInputConnection(imageAppend.GetOutputPort())
-
-# The class vtkVolume is used to pair the previously declared volume as well as the properties to be used when rendering that volume.
-volume = vtk.vtkVolume()
-volume.SetMapper(mapper)
-volume.SetProperty(volumeProperty)
+actor = vtk.vtkActor()
+actor.SetMapper(mapper)
+actor.GetProperty().SetColor(1.0, 0.0, 0.0) # This does not change the color ??
+actor.GetProperty().SetOpacity(0.1)
 
 # With almost everything else ready, its time to initialize the renderer and window
 renderer = vtk.vtkRenderer()
-# ... set background color to white ...
+# ... set background color to black ...
 renderer.SetBackground(0,0,0)
 # Other colors 
 # nc = vtk.vtkNamedColors()
 # renderer.SetBackground(nc.GetColor3d('MidnightBlue'))
 
 # We add the volume to the renderer ...
-renderer.AddVolume(volume)
-
-# Adding the scalar bar color palette
-scalarBar = vtkScalarBarActor()
-scalarBar.SetTitle("Density")
-scalarBar.SetLookupTable(colorFunc);
-scalarBar.SetOrientationToVertical();
-scalarBar.SetPosition( 0.85, 0.7 );
-scalarBar.SetPosition2( 0.1, 0.3 );
-propT = vtkTextProperty()
-propT.SetFontFamilyToArial()
-propT.ItalicOff()
-propT.BoldOn()
-propL = vtkTextProperty()
-propL.SetFontFamilyToArial()
-propL.ItalicOff()
-propL.BoldOff()
-scalarBar.SetTitleTextProperty(propT);
-scalarBar.SetLabelTextProperty(propL);
-scalarBar.SetLabelFormat("%5.0f")
-
-renderer.AddActor(scalarBar)
+renderer.AddActor(actor)
 
 axes = vtk.vtkAxesActor()
 axes.SetShaftTypeToLine()
@@ -174,9 +120,9 @@ axisxact.SetCaptionTextProperty(propA)
 #axes.SetUserTransform(transform)
  
 # the actual text of the axis label can be changed:
-axes.SetXAxisLabelText("");
-axes.SetZAxisLabelText("");
-axes.SetYAxisLabelText("");
+axes.SetXAxisLabelText("")
+axes.SetZAxisLabelText("")
+axes.SetYAxisLabelText("")
  
 renderer.AddActor(axes)
  
