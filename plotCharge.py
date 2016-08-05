@@ -3,8 +3,9 @@ import h5py
 import numpy as np
 from vtk import *
 
-#hf = h5py.File('data/charge-plasma-000026.h5','r')
-hf = h5py.File('data/charge-beam-driver-000026.h5','r')
+hf = h5py.File('data/charge-plasma-000026.h5','r')
+#hf = h5py.File('data/charge-beam-driver-000026.h5','r')
+#hf = h5py.File('data/charge-He-electrons-000026.h5','r')
 
 data = hf.get('charge')
 axisz = hf.get('AXIS/AXIS1')
@@ -85,7 +86,7 @@ imageAppend.SetAppendAxis(0)
 
 alphaChannelFunc = vtk.vtkPiecewiseFunction()
 alphaChannelFunc.AddPoint(0, 0.0)
-alphaChannelFunc.AddPoint(0.1*maxvalue, 0.0)
+alphaChannelFunc.AddPoint(100, 0.01)
 alphaChannelFunc.AddPoint(maxvalue, 0.8)
 
 # This class stores color data and can create color tables from a few color points.
@@ -104,15 +105,20 @@ volumeProperty.ShadeOff()
 volumeProperty.SetInterpolationTypeToLinear()
 
 # This class describes how the volume is rendered (through ray tracing).
-compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
+#compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
 # We can finally create our volume. We also have to specify the data for it, as well as how the data will be rendered.
-volumeMapper = vtk.vtkVolumeRayCastMapper()
-volumeMapper.SetVolumeRayCastFunction(compositeFunction)
-volumeMapper.SetInputConnection(imageAppend.GetOutputPort())
+#mapper = vtk.vtkVolumeRayCastMapper()
+#mapper.SetVolumeRayCastFunction(compositeFunction)
+mapper = vtk.vtkGPUVolumeRayCastMapper()
+#mapper.SetBlendModeToMinimumIntensity();
+#mapper.SetSampleDistance(0.1)
+mapper.SetAutoAdjustSampleDistances(0)
+
+mapper.SetInputConnection(imageAppend.GetOutputPort())
 
 # The class vtkVolume is used to pair the previously declared volume as well as the properties to be used when rendering that volume.
 volume = vtk.vtkVolume()
-volume.SetMapper(volumeMapper)
+volume.SetMapper(mapper)
 volume.SetProperty(volumeProperty)
 
 # With almost everything else ready, its time to initialize the renderer and window
@@ -134,14 +140,16 @@ scalarBar.SetOrientationToVertical();
 scalarBar.SetPosition( 0.85, 0.7 );
 scalarBar.SetPosition2( 0.1, 0.3 );
 propT = vtkTextProperty()
-propL = vtkTextProperty()
 propT.SetFontFamilyToArial()
 propT.ItalicOff()
 propT.BoldOn()
+propL = vtkTextProperty()
+propL.SetFontFamilyToArial()
+propL.ItalicOff()
 propL.BoldOff()
 scalarBar.SetTitleTextProperty(propT);
 scalarBar.SetLabelTextProperty(propL);
-scalarBar.SetLabelFormat("%5.2f")
+scalarBar.SetLabelFormat("%5.0f")
 
 renderer.AddActor(scalarBar)
 
@@ -169,9 +177,7 @@ axes.SetZAxisLabelText("");
 axes.SetYAxisLabelText("");
  
 renderer.AddActor(axes)
-
  
-
 window = vtk.vtkRenderWindow()
 window.AddRenderer(renderer)
 # ... and set window size.
