@@ -11,16 +11,15 @@ hfl.append(h5py.File('data/charge-He-electrons-000026.h5','r'))
 
 window = vtk.vtkRenderWindow()
 # ... and set window size.
-window.SetSize(1440, 900)
+window.SetSize(1280, 800)
 
 renderer = vtk.vtkRenderer()
-# ... set background color 
+# Set background  
 renderer.SetBackground(0,0,0)
-#renderer.TexturedBackgroundOn()
+# renderer.TexturedBackgroundOn()
 # Other colors 
 # nc = vtk.vtkNamedColors()
 # renderer.SetBackground(nc.GetColor3d('MidnightBlue'))
-
 
 data = []
 npdata = []
@@ -50,9 +49,16 @@ for i, hf in enumerate(hfl):
     minvalue = np.amin(npdata[i])
     maxvalue = np.amax(npdata[i])
     print('Minimum value = %.2f  Maximum = %.2f' % (minvalue,maxvalue))
-    den1 = 255.0/maxvalue
-    npdata[i] = np.round(den1 * npdata[i])
 
+    # Rescale data
+    den1 = 255.0/maxvalue
+    if "He-electrons" in hf.filename:
+        den1 *= 100
+    elif "plasma" in hf.filename:
+        den1 *= 50
+
+    npdata[i] = np.round(den1 * npdata[i])
+        
     npdatauchar.append(np.array(npdata[i], dtype=np.uint8))
     print('Shape of the array: ', npdatauchar[i].shape,' Type: ',npdatauchar[i].dtype)
     minvalue = np.amin(npdatauchar[i])
@@ -87,16 +93,20 @@ for i, hf in enumerate(hfl):
     # Opacity and color scales
     opacity = vtk.vtkPiecewiseFunction()
     color = vtk.vtkColorTransferFunction()
-    if i == 0:
+    if "plasma" in hf.filename:
         opacity.AddPoint(0, 0.0)
-        opacity.AddPoint(den1, 0.02)
-        opacity.AddPoint(2*den1, 0.8)
+        opacity.AddPoint(den1, 0.01)
+        opacity.AddPoint(10*den1, 0.8)
         opacity.AddPoint(maxvalue, 1.0)
 
         color.AddRGBPoint(0, 0.078, 0.078, 0.078)
         color.AddRGBPoint(den1, 0.188, 0.247, 0.294)
         color.AddRGBPoint(maxvalue, 1.0, 1.0, 1.0)
-    elif i == 1:
+        # other palette
+        #color.AddRGBPoint(0.0, 0.865, 0.865, 0.865)
+        #color.AddRGBPoint(den1, 0.2313, 0.298, 0.753)
+        #color.AddRGBPoint(maxvalue, 1.0, 1.0, 1.0)
+    elif "beam" in hf.filename :
         opacity.AddPoint(0, 0.0)
         opacity.AddPoint(maxvalue, 1.0)
 
@@ -104,14 +114,14 @@ for i, hf in enumerate(hfl):
         color.AddRGBPoint(0.2*maxvalue, 0.390, 0.050, 0.330)
         color.AddRGBPoint(0.4*maxvalue, 0.700, 0.200, 0.300)
         color.AddRGBPoint(1.0*maxvalue, 1.000, 1.000, 0.200)
-    elif i == 2:
+    elif "He-electrons" in hf.filename:
         opacity.AddPoint(0.0, 0.0)
-        opacity.AddPoint(0.05*maxvalue, 0.0)
-        opacity.AddPoint(0.10*maxvalue, 0.1)
-        opacity.AddPoint(1.00*maxvalue, 1.0)
+        opacity.AddPoint(1, 0.1)
+        opacity.AddPoint(100, 0.8)
+        opacity.AddPoint(255, 1.0)
 
         color.AddRGBPoint(0.0, 0.220, 0.039, 0.235)
-        color.AddRGBPoint(0.05*maxvalue, 0.627, 0.125, 0.235)
+        color.AddRGBPoint(0.01*maxvalue, 0.627, 0.125, 0.235)
         color.AddRGBPoint(0.10*maxvalue, 0.700, 0.200, 0.300)
         color.AddRGBPoint(1.00*maxvalue, 1.000, 1.000, 0.200)
 
@@ -149,7 +159,7 @@ for i, hf in enumerate(hfl):
     # Add the volume to the renderer ...
     renderer.AddVolume(volume[i])
 
-    if i == 1:
+    if ("kk" in "kk") & ( ("beam" in hf.filename) | ("He-electrons" in hf.filename)):
         threshold = vtk.vtkImageThreshold()
         threshold.SetInputConnection(dataImport[i].GetOutputPort())
         threshold.ThresholdBetween(110,200)
