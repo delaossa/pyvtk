@@ -5,9 +5,9 @@ from vtk import *
 
 
 hfl = []
-hfl.append(h5py.File('data/charge-plasma-000026.h5','r'))
-hfl.append(h5py.File('data/charge-beam-driver-000026.h5','r'))
 hfl.append(h5py.File('data/charge-He-electrons-000026.h5','r'))
+hfl.append(h5py.File('data/charge-beam-driver-000026.h5','r'))
+hfl.append(h5py.File('data/charge-plasma-000026.h5','r'))
 
 window = vtk.vtkRenderWindow()
 # ... and set window size.
@@ -159,7 +159,7 @@ for i, hf in enumerate(hfl):
     # Add the volume to the renderer ...
     renderer.AddVolume(volume[i])
 
-    if ("kk" in "kk") & ( ("beam" in hf.filename) | ("He-electrons" in hf.filename)):
+    if (1) & ( ("beam" in hf.filename) | ("He-electrons" in hf.filename)):
         threshold = vtk.vtkImageThreshold()
         threshold.SetInputConnection(dataImport[i].GetOutputPort())
         threshold.ThresholdBetween(110,200)
