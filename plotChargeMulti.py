@@ -103,7 +103,7 @@ for i, hf in enumerate(hfl):
         color[i].AddRGBPoint(1.0*maxvalue, 1.000, 1.000, 0.200)
     elif "He-electrons" in hf.filename:
         opacity[i].AddPoint(0.0, 0.0)
-        opacity[i].AddPoint(1, 0.1)
+        opacity[i].AddPoint(1, 0.3)
         opacity[i].AddPoint(100, 0.8)
         opacity[i].AddPoint(255, 1.0)
 
