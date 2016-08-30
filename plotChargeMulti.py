@@ -18,7 +18,7 @@ window.SetSize(1280, 800)
 renderer = vtk.vtkRenderer()
 # Set background  
 renderer.SetBackground(0,0,0)
-# renderer.TexturedBackgroundOn()
+#renderer.TexturedBackgroundOn()
 # Other colors 
 # nc = vtk.vtkNamedColors()
 # renderer.SetBackground(nc.GetColor3d('MidnightBlue'))
@@ -146,6 +146,8 @@ dataImport.Update()
 
 # Set the mapper
 mapper = vtk.vtkGPUVolumeRayCastMapper()
+#mapper = vtk.vtkFixedPointVolumeRayCastMapper()
+#mapper = vtk.vtkSmartVolumeMapper()
 mapper.SetAutoAdjustSampleDistances(1)
 #mapper.SetSampleDistance(0.1)
 #mapper.SetBlendModeToMaximumIntensity();
@@ -158,6 +160,17 @@ mapper.SetInputConnection(dataImport.GetOutputPort())
 volume = vtk.vtkVolume()
 volume.SetMapper(mapper)
 volume.SetProperty(volumeprop)
+
+planeClip = vtk.vtkPlane()
+planeClip.SetOrigin((axisz[0]+axisz[1])/2.0-axisz[0],0.0,0.0)
+planeClip.SetNormal(0.0, 0.0, -1.0)
+#mapper.AddClippingPlane(planeClip)
+
+light = vtk.vtkLight()
+light.SetColor(1.0, 0.0, 0.0)
+light.SwitchOn()
+light.SetIntensity(1)
+#renderer.AddLight(light)
 
 # Add the volume to the renderer ...
 renderer.AddVolume(volume)
@@ -175,5 +188,23 @@ renderer.ResetCamera()
 renderer.GetActiveCamera().Zoom(2.0)
 
 window.Render()
+
+# Write an EPS file.
+# exp = vtk.vtkGL2PSExporter()  # Not working with openGL2 yet
+# exp.SetRenderWindow(window)
+# exp.SetFilePrefix("screenshot")
+# exp.DrawBackgroundOn()
+# exp.Write()
+
+# Write to PNG file
+w2if = vtk.vtkWindowToImageFilter()
+w2if.SetInput(window)
+w2if.Update();
+ 
+writer = vtk.vtkPNGWriter()
+writer.SetFileName("screenshot.png")
+writer.SetInputConnection(w2if.GetOutputPort())
+writer.Write()
+
 interactor.Initialize()
 interactor.Start()
